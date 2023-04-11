@@ -107,8 +107,8 @@ BEGIN
     EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (6038536829398, 2, 2, ''Flandre'', ''Scarlet'', 21, ''f'', ''Str Ogoal 7'', null)';
     EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (6094536537363, 3, 3, ''Remilia'', ''Scarlet'', 21, ''f'', ''Str Ogoal 7'', ''under house arrest'')'; 
     EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (5039579378368, 4, 4, ''Jak'', ''Mar'', 37, ''m'', ''Str Klaw 15'', ''psychiatric problems'')';
-    EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (5085547536482, 5, 5, ''Karlsefni'', ''Thorfinn'', 19, ''m'', ''Str Igubun 37'', null)';
-    EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (6072686799263, 6, 6, ''Patchouli'', ''Knowledge'', 38, ''f'', ''Str Librariei 7'', ''psychiatric problems'')'; 
+    EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (5085547536482, 5, 5, ''Karlsefni'', ''Thorfinn'', 19, ''m'', ''Str Igubun 37'', ''psychiatric problems'')';
+    EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (6072686799263, 6, 6, ''Mihalovici'', ''Tudopr'', 20, ''m'', ''Str Librariei 7'', null)'; 
     -- p_crime_history
     EXECUTE IMMEDIATE 'INSERT INTO p_crime_history (crime_id, criminal_id, officer_id, victim_id, crime_date, offense, address, region) VALUES (1, 1, 1, 1, TO_DATE(''21-05-2022'',''DD-MM-RRRR''), ''theft'', ''Str Gensokyo 223'', ''IC'')';
     EXECUTE IMMEDIATE 'INSERT INTO p_crime_history (crime_id, criminal_id, officer_id, victim_id, crime_date, offense, address, region) VALUES (2, 1, 2, 2, TO_DATE(''17-09-2021'',''DD-MM-RRRR''), ''assault'', ''Str Daxter 19'', ''IC'')';
@@ -212,7 +212,51 @@ BEGIN
 END;
 /
 
+-- Update salaries
+BEGIN
+    EXECUTE IMMEDIATE 'MERGE INTO p_salary s
+    USING (SELECT officer_info_id, COUNT(officer_info_id) AS no_cases FROM p_involved_officers GROUP BY officer_info_id ORDER BY officer_info_id) w
+    ON (s.officer_info_id = w.officer_info_id)
+    WHEN MATCHED THEN
+    UPDATE SET s.bonus = s.bonus + (w.no_cases) * 100, s.salary = s.salary + (w.no_cases) * 100
+    WHEN NOT MATCHED THEN
+    INSERT (s.officer_info_id, salary, bonus)
+    VALUES (w.officer_info_id, 9000 + w.no_cases * 100, w.no_cases * 100)';
+END;
+/
+
 -- C. Alternative and repetitive structures
+
+-- Display if a victim has or not insurance (input: 3)
+DECLARE
+    v_has_insurance P_INVOLVED_VICTIMS.HAS_INSURANCE%TYPE;
+BEGIN
+    SELECT HAS_INSURANCE INTO v_has_insurance FROM P_INVOLVED_VICTIMS WHERE VICTIM_INFO_ID = &victim_info_id;
+    IF v_has_insurance = 'y' THEN
+        DBMS_OUTPUT.PUT_LINE('Victim has insurance');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Victim does not have insurance');
+    END IF;
+END;
+/
+
+-- Display whether an officer's salary is above, below or the same as the average salary (input: 2)
+DECLARE
+    v_officer_salary P_SALARY.SALARY%TYPE;
+    v_salary_average P_SALARY.SALARY%TYPE;
+BEGIN
+    SELECT AVG(salary) INTO v_salary_average FROM P_SALARY;
+    SELECT SALARY INTO v_officer_salary FROM P_SALARY WHERE OFFICER_INFO_ID = &officer_info_id;
+    CASE
+    WHEN v_officer_salary < v_salary_average THEN
+        DBMS_OUTPUT.PUT_LINE('Officer salary (' || v_officer_salary || ') is below average (' || v_salary_average || ')');
+    WHEN v_officer_salary > v_salary_average THEN
+        DBMS_OUTPUT.PUT_LINE('Officer salary (' || v_officer_salary || ') is above average (' || v_salary_average || ')');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Officer salary (' || v_officer_salary || ') is the same as the average (' || v_salary_average || ')');
+    END CASE;
+END;
+/
 
 -- D. Collections
 
@@ -223,3 +267,5 @@ END;
 -- G. Packages
 
 -- H. Triggers
+
+-- delete this when you remember to show your name in 1 of the queries
