@@ -1,3 +1,5 @@
+-- A. Creating the tables/inserting the data
+
 -- Deleting the tables
 BEGIN
     EXECUTE IMMEDIATE 'DROP TABLE p_captivity_history CASCADE CONSTRAINTS';
@@ -168,4 +170,43 @@ BEGIN
 END;
 /
 
--- Exercises
+-- B. Classic SQL Queries
+
+-- Display all salaries of higher ranks that have salary smaller than all of their inferiors
+BEGIN
+    SELECT DISTINCT i.OFFICER_INFO_ID, FIRST_NAME, LAST_NAME, RANK, SALARY
+    FROM P_OFFICER_INFO i, P_SALARY s
+    WHERE rank NOT IN ('officer') AND i.OFFICER_INFO_ID = s.OFFICER_INFO_ID
+    AND salary <= ALL (SELECT SALARY FROM P_OFFICER_INFO i, P_SALARY s WHERE rank IN ('officer') AND i.OFFICER_INFO_ID = s.OFFICER_INFO_ID);
+END;
+/
+
+-- Display all criminals and the year of their most recent crime
+BEGIN
+    SELECT FIRST_NAME, LAST_NAME, MAX(TO_CHAR(CRIME_DATE, 'rrrr')) LATEST_CRIME
+    FROM P_CRIMINALS cr, P_CRIME_HISTORY h
+    WHERE cr.CRIMINAL_ID = h.CRIMINAL_ID
+    GROUP BY FIRST_NAME, LAST_NAME;
+END;
+/
+
+-- Correct the IC region typo to JC
+BEGIN
+    EXECUTE IMMEDIATE 'UPDATE p_crime_history SET region = ''JC'' WHERE region = ''IC''';
+END;
+/
+
+-- Delete officers that dont have any cases
+BEGIN
+    EXECUTE IMMEDIATE 'DELETE FROM p_officer_info WHERE officer_info_id NOT IN (SELECT officer_info_id FROM p_involved_officers)';
+END;
+/
+
+-- Add the deleted officer back
+BEGIN
+    EXECUTE IMMEDIATE 'INSERT INTO p_officer_info (officer_info_id, first_name, last_name, rank, chief_id, age) VALUES (6, ''Minamitsu'', ''Murasa'', ''officer'', 3, 31)';
+END;
+/
+
+-- C. Alternative and repetitive structures
+
