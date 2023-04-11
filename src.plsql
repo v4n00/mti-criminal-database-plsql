@@ -193,20 +193,33 @@ END;
 -- Correct the IC region typo to JC
 BEGIN
     EXECUTE IMMEDIATE 'UPDATE p_crime_history SET region = ''JC'' WHERE region = ''IC''';
+    DBMS_OUTPUT.PUT_LINE('Rows updated: ' || sql%rowcount);
 END;
 /
 
 -- Delete officers that dont have any cases
 BEGIN
     EXECUTE IMMEDIATE 'DELETE FROM p_officer_info WHERE officer_info_id NOT IN (SELECT officer_info_id FROM p_involved_officers)';
+    DBMS_OUTPUT.PUT_LINE('Rows deleted: ' || sql%rowcount);
+    
 END;
 /
 
 -- Add the deleted officer back
 BEGIN
     EXECUTE IMMEDIATE 'INSERT INTO p_officer_info (officer_info_id, first_name, last_name, rank, chief_id, age) VALUES (6, ''Minamitsu'', ''Murasa'', ''officer'', 3, 31)';
+    DBMS_OUTPUT.PUT_LINE('Rows added: ' || sql%rowcount);
 END;
 /
 
 -- C. Alternative and repetitive structures
 
+-- D. Collections
+
+-- E. Exceptions
+
+-- F. Cursors
+
+-- G. Packages
+
+-- H. Triggers
