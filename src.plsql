@@ -103,12 +103,12 @@ END;
 -- Inserting the data
 BEGIN
     -- p_criminals
-    EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (6073683838378, 1, 1, ''Marisa'', ''Kirisame'', 25, ''f'', ''Str Greensage 63'', null)'; 
+    EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (6073683838378, 1, 1, ''Mihalovici'', ''Tudor'', 20, ''m'', ''Str Greensage 63'', null)'; 
     EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (6038536829398, 2, 2, ''Flandre'', ''Scarlet'', 21, ''f'', ''Str Ogoal 7'', null)';
-    EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (6094536537363, 3, 3, ''Remilia'', ''Scarlet'', 21, ''f'', ''Str Ogoal 7'', ''under house arrest'')'; 
+    EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (6094536537363, 3, 3, ''Remilia'', ''Scarlet'', 24, ''f'', ''Str Ogoal 7'', ''under house arrest'')'; 
     EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (5039579378368, 4, 4, ''Jak'', ''Mar'', 37, ''m'', ''Str Klaw 15'', ''psychiatric problems'')';
-    EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (5085547536482, 5, 5, ''Karlsefni'', ''Thorfinn'', 19, ''m'', ''Str Igubun 37'', ''psychiatric problems'')';
-    EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (6072686799263, 6, 6, ''Mihalovici'', ''Tudopr'', 20, ''m'', ''Str Librariei 7'', null)'; 
+    EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (5085547536482, 5, 5, ''Karlsefni'', ''Thorfinn'', 25, ''m'', ''Str Igubun 37'', ''psychiatric problems'')';
+    EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (6072686799263, 6, 6, ''Marisa'', ''Kirisame'', 20, ''f'', ''Str Librariei 7'', null)'; 
     -- p_crime_history
     EXECUTE IMMEDIATE 'INSERT INTO p_crime_history (crime_id, criminal_id, officer_id, victim_id, crime_date, offense, address, region) VALUES (1, 1, 1, 1, TO_DATE(''21-05-2022'',''DD-MM-RRRR''), ''theft'', ''Str Gensokyo 223'', ''IC'')';
     EXECUTE IMMEDIATE 'INSERT INTO p_crime_history (crime_id, criminal_id, officer_id, victim_id, crime_date, offense, address, region) VALUES (2, 1, 2, 2, TO_DATE(''17-09-2021'',''DD-MM-RRRR''), ''assault'', ''Str Daxter 19'', ''IC'')';
@@ -258,6 +258,44 @@ BEGIN
 END;
 /
 
+-- Display the victims with ids between 1 and 7 in order as long as their age is lower than the average with a for loop
+DECLARE
+    v_age_average P_CRIMINALS.AGE%TYPE;
+    v_criminal_id P_CRIMINALS.CRIMINAL_ID%TYPE;
+    v_criminal_first_name P_CRIMINALS.FIRST_NAME%TYPE;
+    v_criminal_last_name P_CRIMINALS.LAST_NAME%TYPE;
+    v_criminal_age P_CRIMINALS.AGE%TYPE;
+BEGIN
+    SELECT AVG(age) INTO v_age_average FROM P_CRIMINALS;
+    DBMS_OUTPUT.PUT_LINE('Average age: ' || v_age_average);
+    FOR i IN 1..7 LOOP
+        SELECT CRIMINAL_ID, FIRST_NAME, LAST_NAME, AGE INTO v_criminal_id, v_criminal_first_name, v_criminal_last_name, v_criminal_age FROM P_CRIMINALS WHERE CRIMINAL_ID = i;
+        EXIT WHEN v_criminal_age > v_age_average;
+        DBMS_OUTPUT.PUT_LINE('Criminal id: ' || v_criminal_id || ' | Name: ' || v_criminal_first_name || ' ' || v_criminal_last_name || ' | Age: ' || v_criminal_age);
+    END LOOP;
+END;
+/
+
+-- Display the victims with ids between 1 and 7 in order as long as their age is lower than the average with a while loop
+DECLARE
+    v_age_average P_CRIMINALS.AGE%TYPE;
+    v_criminal_id P_CRIMINALS.CRIMINAL_ID%TYPE;
+    v_criminal_first_name P_CRIMINALS.FIRST_NAME%TYPE;
+    v_criminal_last_name P_CRIMINALS.LAST_NAME%TYPE;
+    v_criminal_age P_CRIMINALS.AGE%TYPE;
+    i NUMBER := 1;
+BEGIN
+    SELECT AVG(age) INTO v_age_average FROM P_CRIMINALS;
+    DBMS_OUTPUT.PUT_LINE('Average age: ' || v_age_average);
+    WHILE i <= 7 LOOP
+        SELECT CRIMINAL_ID, FIRST_NAME, LAST_NAME, AGE INTO v_criminal_id, v_criminal_first_name, v_criminal_last_name, v_criminal_age FROM P_CRIMINALS WHERE CRIMINAL_ID = i;
+        EXIT WHEN v_criminal_age > v_age_average;
+        DBMS_OUTPUT.PUT_LINE('Criminal id: ' || v_criminal_id || ' | Name: ' || v_criminal_first_name || ' ' || v_criminal_last_name || ' | Age: ' || v_criminal_age);
+        i := i + 1;
+    END LOOP;
+END;
+/
+
 -- D. Collections
 
 -- E. Exceptions
@@ -267,5 +305,3 @@ END;
 -- G. Packages
 
 -- H. Triggers
-
--- delete this when you remember to show your name in 1 of the queries
