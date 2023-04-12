@@ -354,7 +354,88 @@ END;
 
 -- E. Exceptions (3 implicit, 2 explicit)
 
--- F. Cursors (implicit and explicit, with and without parameters)
+-- Display the criminal with id 10 and if it does not exist, treat the exception
+DECLARE
+    v_criminal_id P_CRIMINALS.CRIMINAL_ID%TYPE := 10;
+    v_criminal_first_name P_CRIMINALS.FIRST_NAME%TYPE;
+    v_criminal_last_name P_CRIMINALS.LAST_NAME%TYPE;
+    v_criminal_age P_CRIMINALS.AGE%TYPE;
+BEGIN
+    SELECT FIRST_NAME, LAST_NAME, AGE INTO v_criminal_first_name, v_criminal_last_name, v_criminal_age FROM P_CRIMINALS WHERE CRIMINAL_ID = v_criminal_id;
+    DBMS_OUTPUT.PUT_LINE('Criminal id: ' || v_criminal_id || ' | Name: ' || v_criminal_first_name || ' ' || v_criminal_last_name || ' | Age: ' || v_criminal_age);
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('The criminal with id ' || v_criminal_id || ' was not found.');
+END;
+/
+
+-- Display the crimes of criminal with id 2 and if it returns too many rows, treat the exception
+DECLARE
+    v_criminal_id P_CRIMINALS.CRIMINAL_ID%TYPE := 1;
+    v_crime_id P_CRIME_HISTORY.CRIME_ID%TYPE;
+    v_crime_date P_CRIME_HISTORY.CRIME_DATE%TYPE;
+BEGIN
+    SELECT CRIME_ID, CRIME_DATE INTO v_crime_id, v_crime_date FROM P_CRIME_HISTORY WHERE CRIMINAL_ID = v_criminal_id;
+    DBMS_OUTPUT.PUT_LINE('Criminal id: ' || v_criminal_id || ' | Crime id: ' || v_crime_id || ' | Crime date: ' || v_crime_date);
+EXCEPTION
+    WHEN TOO_MANY_ROWS THEN
+        DBMS_OUTPUT.PUT_LINE('The criminal with id ' || v_criminal_id || ' has too many crimes.');
+END;
+/
+
+-- Try to insert a new record into the table p_crime_history and if the exception is raised, display the error message
+DECLARE
+    INSERT_EXCEPT EXCEPTION;
+    PRAGMA EXCEPTION_INIT(INSERT_EXCEPT, -00001);
+BEGIN
+    INSERT INTO p_crime_history (crime_id, offense, address, region) VALUES (1, 'theft', 'Str Gensokyo 223', 'IC');
+EXCEPTION
+    WHEN INSERT_EXCEPT THEN
+        DBMS_OUTPUT.PUT_LINE('Not enough information has been provided.');
+    DBMS_OUTPUT.PUT_LINE(SQLERRM);
+END;
+/
+
+-- Try to update criminal with id 9, if they don't exist treat it with a custom exception
+DECLARE
+    v_criminal_id P_CRIMINALS.CRIMINAL_ID%TYPE := 9;
+    v_criminal_first_name P_CRIMINALS.FIRST_NAME%TYPE := 'Aya';
+    v_criminal_last_name P_CRIMINALS.LAST_NAME%TYPE := 'Shameimaru';
+    v_criminal_age P_CRIMINALS.AGE%TYPE := 16;
+    e_exc1 EXCEPTION;
+BEGIN
+    UPDATE P_CRIMINALS
+    SET FIRST_NAME = v_criminal_first_name, LAST_NAME = v_criminal_last_name, AGE = v_criminal_age
+    WHERE CRIMINAL_ID = v_criminal_id;
+    IF SQL%NOTFOUND THEN
+        RAISE e_exc1;
+    END IF;
+EXCEPTION
+    WHEN e_exc1 THEN
+        DBMS_OUTPUT.PUT_LINE('The criminal with id ' || v_criminal_id || ' was not found.');
+END;
+/
+
+-- Try to add a new criminal, if the age is under 14 a custom exception will be thrown
+DECLARE
+    v_criminal_id P_CRIMINALS.CRIMINAL_ID%TYPE := 8;
+    v_criminal_first_name P_CRIMINALS.FIRST_NAME%TYPE := 'Aya';
+    v_criminal_last_name P_CRIMINALS.LAST_NAME%TYPE := 'Shameimaru';
+    v_criminal_age P_CRIMINALS.AGE%TYPE := 13;
+    e_exc2 EXCEPTION;
+BEGIN
+    IF v_criminal_age < 14 THEN
+        RAISE e_exc2;
+    END IF;
+    INSERT INTO P_CRIMINALS (CRIMINAL_ID, FIRST_NAME, LAST_NAME, AGE) VALUES (v_criminal_id, v_criminal_first_name, v_criminal_last_name, v_criminal_age);
+EXCEPTION
+    WHEN e_exc2 THEN
+        DBMS_OUTPUT.PUT_LINE('The criminal with id ' || v_criminal_id || ' is too young.');
+END;
+/
+
+-- F. Cursors
+
 -- Modify the region BR to HL, if the region is not found, display an error message
 BEGIN
     UPDATE P_CRIME_HISTORY
