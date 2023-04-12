@@ -314,7 +314,7 @@ BEGIN
 END;
 /
 
--- Add all the criminals name to a nested table
+-- Add all the criminals name to a nested table and display them    
 DECLARE
     CURSOR c_criminals IS
         SELECT FIRST_NAME
@@ -332,7 +332,25 @@ BEGIN
 END;
 /
 
--- varray
+-- Add all the officers name to a variable array and display them
+DECLARE
+    CURSOR c_officers IS
+        SELECT FIRST_NAME
+        FROM p_officer_info;
+    TYPE t_officer_name_type IS VARRAY(10) OF P_OFFICER_INFO.FIRST_NAME%TYPE;
+    v_officer_name t_officer_name_type := t_officer_name_type();
+    v_index NUMBER := 1;
+BEGIN
+    FOR i IN c_officers LOOP
+        v_officer_name.extend();
+        v_officer_name(v_index) := i.first_name;
+        v_index := v_index + 1;
+    END LOOP;
+    FOR i IN v_officer_name.FIRST..v_officer_name.LAST LOOP
+        DBMS_OUTPUT.PUT_LINE('Officer name: ' || v_officer_name(i));
+    END LOOP;
+END;
+/
 
 -- E. Exceptions
 
