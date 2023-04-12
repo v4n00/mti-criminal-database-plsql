@@ -521,5 +521,75 @@ END;
 /
 
 -- G. Packages (3 functions, 3 procedures, and 1 package)
+-- function to return average age
+
+CREATE OR REPLACE FUNCTION f_get_average_age RETURN NUMBER IS
+    v_average_age NUMBER;
+BEGIN
+    SELECT AVG(age) INTO v_average_age FROM p_criminals;
+    RETURN v_average_age;
+END;
+/
+SELECT f_get_average_age FROM dual;
+
+-- function to return the number of criminals
+CREATE OR REPLACE FUNCTION f_get_criminals_count RETURN NUMBER IS
+    v_criminals_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_criminals_count FROM p_criminals;
+    RETURN v_criminals_count;
+END;
+/
+SELECT f_get_criminals_count FROM dual;
+
+-- function to return number of crimes for a given criminal id
+CREATE OR REPLACE FUNCTION f_get_crimes_count(p_criminal_id IN NUMBER) RETURN NUMBER IS
+    v_crimes_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_crimes_count FROM p_crime_history WHERE criminal_id = p_criminal_id;
+    RETURN v_crimes_count;
+END;
+/
+SELECT f_get_crimes_count(1) FROM dual;
+
+-- procedure to update a salary
+CREATE OR REPLACE PROCEDURE p_update_salary(p_officer_id IN NUMBER, p_salary IN NUMBER) IS
+BEGIN
+    UPDATE p_salary
+    SET salary = p_salary
+    WHERE officer_info_id = p_officer_id;
+END;
+/
+CALL p_update_salary(1, 100000);
+
+-- procedure to return total incarceration time of a criminal
+CREATE OR REPLACE PROCEDURE p_get_total_incarceration_time(p_criminal_id IN NUMBER, p_total_incarceration_time IN OUT NUMBER) IS
+    CURSOR c_captivity_history_record IS
+        SELECT DATE_INCARCERATED, DATE_FREED, CAPTIVITY_ID
+        FROM P_CAPTIVITY_HISTORY;
+    c_captivity_history c_captivity_history_record%rowtype;
+    v_captivity_id NUMBER;
+BEGIN
+    SELECT CAPTIVITY_HISTORY_ID INTO v_captivity_id FROM P_CRIMINALS WHERE CRIMINAL_ID = p_criminal_id;
+    OPEN c_captivity_history_record;
+    LOOP
+        FETCH c_captivity_history_record INTO c_captivity_history;
+        EXIT WHEN c_captivity_history_record%NOTFOUND;
+        IF c_captivity_history.CAPTIVITY_ID = v_captivity_id THEN
+            p_total_incarceration_time := p_total_incarceration_time + TO_NUMBER(MONTHS_BETWEEN(c_captivity_history.DATE_FREED, c_captivity_history.DATE_INCARCERATED));
+        END IF;
+    END LOOP;
+    CLOSE c_captivity_history_record;
+END;
+/
+DECLARE
+    v_total_incarceration_time NUMBER := 0;
+BEGIN
+    p_get_total_incarceration_time(1, v_total_incarceration_time);
+    DBMS_OUTPUT.PUT_LINE('Total incarceration time: ' || ROUND(v_total_incarceration_time, 2) || ' months');
+END;
+/
+
+-- add 1 more procedure and 1 package
 
 -- H. Triggers (2 instruction level and 2 row level)
