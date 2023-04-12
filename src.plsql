@@ -298,6 +298,41 @@ END;
 
 -- D. Collections
 
+-- Display all the police department force ids except the lowest ranks (officers) using indexed tables
+DECLARE
+    type num_table is table of p_officer_info.officer_info_id%type index by pls_integer;
+    v_tab num_table;
+    v_index pls_integer := 1;
+BEGIN
+    FOR i IN (SELECT officer_info_id FROM p_officer_info WHERE rank != 'officer') LOOP
+        v_tab(v_index) := i.officer_info_id;
+        v_index := v_index + 1;
+    END LOOP;
+    FOR i IN 1..v_tab.COUNT LOOP
+        DBMS_OUTPUT.PUT_LINE('Officer id: ' || v_tab(i));
+    END LOOP;
+END;
+/
+
+-- Add all the criminals name to a nested table
+DECLARE
+    CURSOR c_criminals IS
+        SELECT FIRST_NAME
+        FROM p_criminals;
+    TYPE t_criminal_name_type IS TABLE OF P_CRIMINALS.FIRST_NAME%TYPE;
+    v_criminal_name t_criminal_name_type := t_criminal_name_type();
+BEGIN
+    FOR i IN c_criminals LOOP
+        v_criminal_name.EXTEND;
+        v_criminal_name(v_criminal_name.COUNT) := i.first_name;
+    END LOOP;
+    FOR i IN v_criminal_name.FIRST..v_criminal_name.LAST LOOP
+        DBMS_OUTPUT.PUT_LINE('Criminal name: ' || v_criminal_name(i));
+    END LOOP;
+END;
+/
+
+-- varray
 
 -- E. Exceptions
 
