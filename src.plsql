@@ -396,6 +396,48 @@ BEGIN
 END;
 /
 
+-- Display 3 of the oldest criminals with an explicit cursor
+DECLARE
+    CURSOR c_criminals IS
+        SELECT *
+        FROM p_criminals
+        ORDER BY age DESC;
+    v_criminal_id P_CRIMINALS.CRIMINAL_ID%TYPE;
+    v_criminal_first_name P_CRIMINALS.FIRST_NAME%TYPE;
+    v_criminal_last_name P_CRIMINALS.LAST_NAME%TYPE;
+    v_criminal_age P_CRIMINALS.AGE%TYPE;
+    v_index NUMBER := 1;
+BEGIN
+    FOR i IN c_criminals LOOP
+        IF v_index <= 3 THEN
+            v_criminal_id := i.criminal_id;
+            v_criminal_first_name := i.first_name;
+            v_criminal_last_name := i.last_name;
+            v_criminal_age := i.age;
+            DBMS_OUTPUT.PUT_LINE('Criminal id: ' || v_criminal_id || ' | Name: ' || v_criminal_first_name || ' ' || v_criminal_last_name || ' | Age: ' || v_criminal_age);
+            v_index := v_index + 1;
+        END IF;
+    END LOOP;
+END;
+/
+
+-- Display the list of crimes that happened in the IC sector with an explicit cursor
+DECLARE
+    CURSOR c_crimes_record IS
+        SELECT *
+        FROM p_crime_history
+        WHERE region = 'IC';
+    c_crimes c_crimes_record%rowtype;
+BEGIN
+    OPEN c_crimes_record;
+    LOOP
+        FETCH c_crimes_record INTO c_crimes;
+        EXIT WHEN c_crimes_record%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE('Crime id: ' || c_crimes.CRIMINAL_ID || ' | Crime date: ' || c_crimes.CRIME_DATE || ' | Offense: ' || c_crimes.OFFENSE);
+    END LOOP;
+    CLOSE c_crimes_record;
+END;
+/
 
 -- G. Packages (3 functions, 3 procedures, and 1 package)
 
