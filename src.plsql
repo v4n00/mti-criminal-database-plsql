@@ -352,10 +352,51 @@ BEGIN
 END;
 /
 
--- E. Exceptions
+-- E. Exceptions (3 implicit, 2 explicit)
 
--- F. Cursors
+-- F. Cursors (implicit and explicit, with and without parameters)
+-- Modify the region BR to HL, if the region is not found, display an error message
+BEGIN
+    UPDATE P_CRIME_HISTORY
+    SET region = 'BR'
+    WHERE region = 'HL';
+    IF SQL%NOTFOUND THEN
+        DBMS_OUTPUT.PUT_LINE('The region BR was not found on any records.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('The region IC was found on ' || SQL%ROWCOUNT || ' records.');
+    END IF;
+END;
+/
 
--- G. Packages
+-- Delete a salary for a given officer id, if the officer id is not found, display an error message (input: 2)
+DECLARE
+    v_officer_id P_SALARY.OFFICER_INFO_ID%TYPE := &officer_id;
+BEGIN
+    DELETE FROM P_SALARY
+    WHERE OFFICER_INFO_ID = v_officer_id;
+    IF SQL%NOTFOUND THEN
+        DBMS_OUTPUT.PUT_LINE('The criminal with id ' || v_officer_id || ' was not found.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('The criminal with id ' || v_officer_id || ' was found and deleted.');
+    END IF;
+END;
+/
 
--- H. Triggers
+-- Display how many rows the criminal with a given id has in the crime history table (input: 3)
+DECLARE
+    v_criminal_id P_CRIMINALS.CRIMINAL_ID%TYPE := &id;
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_count FROM P_CRIME_HISTORY WHERE CRIMINAL_ID = v_criminal_id;
+    IF SQL%FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('The criminal with id ' || v_criminal_id || ' has ' || v_count || ' rows in the crime history table.');
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('The criminal with id ' || v_criminal_id || ' was not found.');
+    END IF;
+END;
+/
+
+
+-- G. Packages (3 functions, 3 procedures, and 1 package)
+
+-- H. Triggers (2 instruction level and 2 row level)
