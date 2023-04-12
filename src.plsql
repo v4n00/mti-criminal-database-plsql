@@ -276,27 +276,28 @@ BEGIN
 END;
 /
 
--- Display the victims with ids between 1 and 7 in order as long as their age is lower than the average with a while loop
+-- Display the criminals with ids between 1 and 7 in order as long as their age is lower than the average with a while loop
 DECLARE
-    v_age_average P_CRIMINALS.AGE%TYPE;
-    v_criminal_id P_CRIMINALS.CRIMINAL_ID%TYPE;
-    v_criminal_first_name P_CRIMINALS.FIRST_NAME%TYPE;
-    v_criminal_last_name P_CRIMINALS.LAST_NAME%TYPE;
-    v_criminal_age P_CRIMINALS.AGE%TYPE;
+    v_age_average P_VICTIM_INFO.AGE%TYPE;
+    v_victim_id P_VICTIM_INFO.VICTIM_INFO_ID%TYPE;
+    v_victim_first_name P_VICTIM_INFO.FIRST_NAME%TYPE;
+    v_victim_last_name P_VICTIM_INFO.LAST_NAME%TYPE;
+    v_victim_age P_VICTIM_INFO.AGE%TYPE;
     i NUMBER := 1;
 BEGIN
-    SELECT AVG(age) INTO v_age_average FROM P_CRIMINALS;
+    SELECT AVG(age) INTO v_age_average FROM P_VICTIM_INFO;
     DBMS_OUTPUT.PUT_LINE('Average age: ' || v_age_average);
     WHILE i <= 7 LOOP
-        SELECT CRIMINAL_ID, FIRST_NAME, LAST_NAME, AGE INTO v_criminal_id, v_criminal_first_name, v_criminal_last_name, v_criminal_age FROM P_CRIMINALS WHERE CRIMINAL_ID = i;
-        EXIT WHEN v_criminal_age > v_age_average;
-        DBMS_OUTPUT.PUT_LINE('Criminal id: ' || v_criminal_id || ' | Name: ' || v_criminal_first_name || ' ' || v_criminal_last_name || ' | Age: ' || v_criminal_age);
+        SELECT VICTIM_INFO_ID, FIRST_NAME, LAST_NAME, AGE INTO v_victim_id, v_victim_first_name, v_victim_last_name, v_victim_age FROM P_VICTIM_INFO WHERE VICTIM_INFO_ID = i;
+        EXIT WHEN v_victim_age > v_age_average;
+        DBMS_OUTPUT.PUT_LINE('Victim id: ' || v_victim_id || ' | Name: ' || v_victim_first_name || ' ' || v_victim_last_name || ' | Age: ' || v_victim_age);
         i := i + 1;
     END LOOP;
 END;
 /
 
 -- D. Collections
+
 
 -- E. Exceptions
 
