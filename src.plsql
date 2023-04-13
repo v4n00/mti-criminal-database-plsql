@@ -172,24 +172,6 @@ END;
 
 -- B. Classic SQL Queries
 
--- Display all salaries of higher ranks that have salary smaller than all of their inferiors
-BEGIN
-    SELECT DISTINCT i.OFFICER_INFO_ID, FIRST_NAME, LAST_NAME, RANK, SALARY
-    FROM P_OFFICER_INFO i, P_SALARY s
-    WHERE rank NOT IN ('officer') AND i.OFFICER_INFO_ID = s.OFFICER_INFO_ID
-    AND salary <= ALL (SELECT SALARY FROM P_OFFICER_INFO i, P_SALARY s WHERE rank IN ('officer') AND i.OFFICER_INFO_ID = s.OFFICER_INFO_ID);
-END;
-/
-
--- Display all criminals and the year of their most recent crime
-BEGIN
-    SELECT FIRST_NAME, LAST_NAME, MAX(TO_CHAR(CRIME_DATE, 'rrrr')) LATEST_CRIME
-    FROM P_CRIMINALS cr, P_CRIME_HISTORY h
-    WHERE cr.CRIMINAL_ID = h.CRIMINAL_ID
-    GROUP BY FIRST_NAME, LAST_NAME;
-END;
-/
-
 -- Correct the IC region typo to JC
 BEGIN
     EXECUTE IMMEDIATE 'UPDATE p_crime_history SET region = ''JC'' WHERE region = ''IC''';
@@ -201,7 +183,6 @@ END;
 BEGIN
     EXECUTE IMMEDIATE 'DELETE FROM p_officer_info WHERE officer_info_id NOT IN (SELECT officer_info_id FROM p_involved_officers)';
     DBMS_OUTPUT.PUT_LINE('Rows deleted: ' || sql%rowcount);
-    
 END;
 /
 
@@ -276,7 +257,7 @@ BEGIN
 END;
 /
 
--- Display the criminals with ids between 1 and 7 in order as long as their age is lower than the average with a while loop
+-- Display the criminals with ids between 1 and 4 in order as long as their age is lower than the average with a while loop
 DECLARE
     v_age_average P_VICTIM_INFO.AGE%TYPE;
     v_victim_id P_VICTIM_INFO.VICTIM_INFO_ID%TYPE;
@@ -287,7 +268,7 @@ DECLARE
 BEGIN
     SELECT AVG(age) INTO v_age_average FROM P_VICTIM_INFO;
     DBMS_OUTPUT.PUT_LINE('Average age: ' || v_age_average);
-    WHILE i <= 7 LOOP
+    WHILE i <= 4 LOOP
         SELECT VICTIM_INFO_ID, FIRST_NAME, LAST_NAME, AGE INTO v_victim_id, v_victim_first_name, v_victim_last_name, v_victim_age FROM P_VICTIM_INFO WHERE VICTIM_INFO_ID = i;
         EXIT WHEN v_victim_age > v_age_average;
         DBMS_OUTPUT.PUT_LINE('Victim id: ' || v_victim_id || ' | Name: ' || v_victim_first_name || ' ' || v_victim_last_name || ' | Age: ' || v_victim_age);
@@ -483,34 +464,26 @@ DECLARE
         SELECT *
         FROM p_criminals
         ORDER BY age DESC;
-    v_criminal_id P_CRIMINALS.CRIMINAL_ID%TYPE;
-    v_criminal_first_name P_CRIMINALS.FIRST_NAME%TYPE;
-    v_criminal_last_name P_CRIMINALS.LAST_NAME%TYPE;
-    v_criminal_age P_CRIMINALS.AGE%TYPE;
     v_index NUMBER := 1;
 BEGIN
     FOR i IN c_criminals LOOP
         IF v_index <= 3 THEN
-            v_criminal_id := i.criminal_id;
-            v_criminal_first_name := i.first_name;
-            v_criminal_last_name := i.last_name;
-            v_criminal_age := i.age;
-            DBMS_OUTPUT.PUT_LINE('Criminal id: ' || v_criminal_id || ' | Name: ' || v_criminal_first_name || ' ' || v_criminal_last_name || ' | Age: ' || v_criminal_age);
+            DBMS_OUTPUT.PUT_LINE('Criminal id: ' || i.criminal_id || ' | Name: ' || i.first_name || ' ' || i.last_name || ' | Age: ' || i.age);
             v_index := v_index + 1;
         END IF;
     END LOOP;
 END;
 /
 
--- Display the list of crimes that happened in the IC sector with an explicit cursor
+-- Display the list of crimes that happened in the JC sector with an explicit cursor
 DECLARE
-    CURSOR c_crimes_record IS
+    CURSOR c_crimes_record (region_code VARCHAR2) IS
         SELECT *
         FROM p_crime_history
-        WHERE region = 'IC';
+        WHERE region = region_code;
     c_crimes c_crimes_record%rowtype;
 BEGIN
-    OPEN c_crimes_record;
+    OPEN c_crimes_record('JC');
     LOOP
         FETCH c_crimes_record INTO c_crimes;
         EXIT WHEN c_crimes_record%NOTFOUND;
@@ -522,8 +495,7 @@ END;
 
 -- G. Packages (3 functions, 3 procedures, and 1 package)
 
--- Make afunction to return average age
-
+-- Make afunction to return average age of criminals
 CREATE OR REPLACE FUNCTION f_get_average_age RETURN NUMBER IS
     v_average_age NUMBER;
 BEGIN
@@ -666,10 +638,11 @@ DECLARE
     v_criminal_id NUMBER;
 BEGIN
     SELECT p_utilities.f_find_criminal_by_name('John', 'Doe') INTO v_criminal_id FROM dual;
-    p_utilities.f_find_salary(100000, v_officer_id);
+    p_utilities.f_find_salary(2500, v_officer_id);
     IF v_officer_id IS NOT NULL THEN
         DBMS_OUTPUT.PUT_LINE('Officer id: ' || v_officer_id);
     END IF;
+    DBMS_OUTPUT.PUT_LINE('Full name: ' || p_utilities.f_get_full_name(2));
 END;
 /
 
@@ -691,9 +664,8 @@ BEGIN
     END IF;
 END;
 /
-
 BEGIN
-UPDATE p_salary SET salary = 100000 WHERE officer_info_id = 1;
+    UPDATE p_salary SET salary = 100000 WHERE officer_info_id = 1;
 END;
 /
 
@@ -707,7 +679,6 @@ BEGIN
     END IF;
 END;
 /
-
 BEGIN
     INSERT INTO p_criminals(CRIMINAL_ID, FIRST_NAME, LAST_NAME, AGE) VALUES (9, 'John', 'Doe', 13);
 END;
@@ -730,7 +701,6 @@ BEGIN
    END IF;
 END;
 /
-
 BEGIN
     INSERT INTO p_criminals(CRIMINAL_ID, FIRST_NAME, LAST_NAME, AGE) VALUES (10, 'Flandre', 'Scarlet', 15);
 END;
@@ -752,7 +722,6 @@ BEGIN
    END IF;
 END;
 /
-
 BEGIN
     INSERT INTO p_criminals(CRIMINAL_ID, FIRST_NAME, LAST_NAME, AGE, REMARKS) VALUES (11, 'John', 'Doe', 44, 'being happy');
 END;
