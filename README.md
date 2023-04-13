@@ -1,5 +1,5 @@
-<h1 align="center">Oracle SQL Criminal Record Database</h1>
-<h4 align="center"><i>Individual project for my Databases Class</i></h2>
+<h1 align="center">PLSQL Statements for a Criminal Record Database</h1>
+<h4 align="center"><i>Individual project for my DBMS Class</i></h2>
 
 # Description
 This database is designed to showcase several important features of SQL, including Many-to-Many links, hierarchical relations, and Data Manipulation Language (DML) statements.
@@ -28,7 +28,7 @@ END;
 ```
 
 ## Functions & Procedures:
-```PLSQL
+```SQL
 -- Procedure: return total incarceration time of a criminal
 CREATE OR REPLACE PROCEDURE p_get_total_incarceration_time(p_criminal_id IN NUMBER, p_total_incarceration_time IN OUT NUMBER) IS
     CURSOR c_captivity_history_record IS
