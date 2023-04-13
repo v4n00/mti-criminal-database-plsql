@@ -660,4 +660,42 @@ BEGIN
 END;
 /
 
--- H. Triggers (2 instruction level and 2 row level)
+-- H. Triggers
+
+-- Create a trigger to count the salary difference when its updated
+CREATE OR REPLACE TRIGGER t_salary_difference
+    BEFORE UPDATE OF salary ON p_salary
+    FOR EACH ROW
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('Old salary: ' || :OLD.salary); 
+    DBMS_OUTPUT.PUT_LINE('New salary: ' || :NEW.salary); 
+    IF :OLD.salary > :NEW.salary THEN
+        DBMS_OUTPUT.PUT_LINE('Salary decreased by ' || (:OLD.salary - :NEW.salary));
+    ELSIF :OLD.salary < :NEW.salary THEN
+        DBMS_OUTPUT.PUT_LINE('Salary increased by ' || (:NEW.salary - :OLD.salary));
+    ELSE
+        DBMS_OUTPUT.PUT_LINE('Salary is the same');
+    END IF;
+END;
+/
+
+BEGIN
+UPDATE p_salary SET salary = 100000 WHERE officer_info_id = 1;
+END;
+/
+
+-- Create a trigger: when adding a criminal if the age is under 14 there will be an error raised
+CREATE OR REPLACE TRIGGER t_criminal_age
+    BEFORE INSERT ON p_criminals
+    FOR EACH ROW
+BEGIN
+    IF :NEW.age < 14 THEN
+        RAISE_APPLICATION_ERROR(-20101, 'Criminal age is under 14');
+    END IF;
+END;
+/
+
+BEGIN
+    INSERT INTO p_criminals(CRIMINAL_ID, FIRST_NAME, LAST_NAME, AGE) VALUES (9, 'John', 'Doe', 13);
+END;
+/
