@@ -6,7 +6,7 @@ This repo is an extension of my [previous project's database](https://github.com
 
 # Examples of statements used:
 
-## Functions & Procedures:
+## Functions & Procedures
 ```SQL
 -- Procedure: return total incarceration time of a criminal
 CREATE OR REPLACE PROCEDURE p_get_total_incarceration_time(p_criminal_id IN NUMBER, p_total_incarceration_time IN OUT NUMBER) IS
