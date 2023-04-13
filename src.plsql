@@ -612,11 +612,14 @@ CALL p_show_criminals_with_remarks();
 
 -- Make a package with different utilities
 CREATE OR REPLACE PACKAGE p_utilities AS
-    -- Find a criminal by name
+    -- Function: Find a criminal by name
     FUNCTION f_find_criminal_by_name(p_first_name IN VARCHAR2, p_last_name IN VARCHAR2) RETURN NUMBER;
     
-    -- Find a salary that is given
+    -- Procedure: Find a salary that is given
     PROCEDURE f_find_salary(p_salary IN NUMBER, p_officer_info_id IN OUT NUMBER);
+
+    -- Function: Return the full name of a criminal
+    FUNCTION f_get_full_name(p_criminal_id IN NUMBER) RETURN VARCHAR2;
 END;
 /
 
@@ -645,6 +648,16 @@ CREATE OR REPLACE PACKAGE BODY p_utilities AS
         WHEN NO_DATA_FOUND THEN
             DBMS_OUTPUT.PUT_LINE('There is no officer with the given salary');
     END f_find_salary;
+
+    FUNCTION f_get_full_name(p_criminal_id IN NUMBER) RETURN VARCHAR2 IS
+        v_full_name VARCHAR2(100);
+        v_first_name VARCHAR2(50);
+        v_last_name VARCHAR2(50);
+    BEGIN
+        SELECT first_name, last_name INTO v_first_name, v_last_name FROM p_criminals WHERE criminal_id = p_criminal_id;
+        v_full_name := v_first_name || ' ' || v_last_name;
+        RETURN v_full_name;
+    END f_get_full_name;
 END p_utilities;
 /
 
@@ -662,7 +675,7 @@ END;
 
 -- H. Triggers
 
--- Create a trigger to count the salary difference when its updated
+-- Create a trigger: count the salary difference when its updated
 CREATE OR REPLACE TRIGGER t_salary_difference
     BEFORE UPDATE OF salary ON p_salary
     FOR EACH ROW
@@ -697,5 +710,50 @@ END;
 
 BEGIN
     INSERT INTO p_criminals(CRIMINAL_ID, FIRST_NAME, LAST_NAME, AGE) VALUES (9, 'John', 'Doe', 13);
+END;
+/
+
+-- Create a trigger: checks if there is an existing criminal with the same name, if a duplicate is found, it raises an exception and rolls back the transaction.
+CREATE OR REPLACE TRIGGER prevent_duplicate_criminals
+AFTER INSERT OR UPDATE ON P_CRIMINALS
+DECLARE
+   v_duplicate_count INTEGER;
+BEGIN
+   SELECT COUNT(*)
+   INTO v_duplicate_count
+   FROM p_criminals
+   WHERE P_UTILITIES.F_GET_FULL_NAME(CRIMINAL_ID) IN
+   (SELECT P_UTILITIES.F_GET_FULL_NAME(CRIMINAL_ID) AS full_name FROM p_criminals GROUP BY P_UTILITIES.F_GET_FULL_NAME(CRIMINAL_ID) HAVING COUNT(*) > 1);
+
+   IF v_duplicate_count > 0 THEN
+      RAISE_APPLICATION_ERROR(-20001, 'Duplicate criminal full name is not allowed.');
+   END IF;
+END;
+/
+
+BEGIN
+    INSERT INTO p_criminals(CRIMINAL_ID, FIRST_NAME, LAST_NAME, AGE) VALUES (10, 'Flandre', 'Scarlet', 15);
+END;
+/
+
+-- Create a trigger: if the criminals remarks are not in a list of predermined remarks, it will raise an exception and roll back the transaction.
+CREATE OR REPLACE TRIGGER validate_criminal_status
+AFTER INSERT OR UPDATE ON p_criminals
+DECLARE
+   v_invalid_status_count INTEGER;
+BEGIN
+   SELECT COUNT(*)
+   INTO v_invalid_status_count
+   FROM p_criminals
+   WHERE remarks NOT IN ('in hospital', 'psychiatric problems', 'under house arrest');
+
+   IF v_invalid_status_count > 0 THEN
+      RAISE_APPLICATION_ERROR(-20003, 'Invalid criminal status found.');
+   END IF;
+END;
+/
+
+BEGIN
+    INSERT INTO p_criminals(CRIMINAL_ID, FIRST_NAME, LAST_NAME, AGE, REMARKS) VALUES (11, 'John', 'Doe', 44, 'being happy');
 END;
 /
