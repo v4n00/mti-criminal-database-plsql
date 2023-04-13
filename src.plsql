@@ -107,7 +107,7 @@ BEGIN
     EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (6038536829398, 2, 2, ''Flandre'', ''Scarlet'', 21, ''f'', ''Str Ogoal 7'', null)';
     EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (6094536537363, 3, 3, ''Remilia'', ''Scarlet'', 24, ''f'', ''Str Ogoal 7'', ''under house arrest'')'; 
     EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (5039579378368, 4, 4, ''Jak'', ''Mar'', 37, ''m'', ''Str Klaw 15'', ''psychiatric problems'')';
-    EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (5085547536482, 5, 5, ''Karlsefni'', ''Thorfinn'', 25, ''m'', ''Str Igubun 37'', ''psychiatric problems'')';
+    EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (5085547536482, 5, 5, ''Karlsefni'', ''Thorfinn'', 25, ''m'', ''Str Igubun 37'', ''in hospital'')';
     EXECUTE IMMEDIATE 'INSERT INTO p_criminals (cnp, criminal_id, captivity_history_id, first_name, last_name, age, gender, address, remarks) VALUES (6072686799263, 6, 6, ''Marisa'', ''Kirisame'', 20, ''f'', ''Str Librariei 7'', null)'; 
     -- p_crime_history
     EXECUTE IMMEDIATE 'INSERT INTO p_crime_history (crime_id, criminal_id, officer_id, victim_id, crime_date, offense, address, region) VALUES (1, 1, 1, 1, TO_DATE(''21-05-2022'',''DD-MM-RRRR''), ''theft'', ''Str Gensokyo 223'', ''IC'')';
@@ -521,7 +521,8 @@ END;
 /
 
 -- G. Packages (3 functions, 3 procedures, and 1 package)
--- function to return average age
+
+-- Make afunction to return average age
 
 CREATE OR REPLACE FUNCTION f_get_average_age RETURN NUMBER IS
     v_average_age NUMBER;
@@ -532,7 +533,7 @@ END;
 /
 SELECT f_get_average_age FROM dual;
 
--- function to return the number of criminals
+-- Make a function to return the number of criminals
 CREATE OR REPLACE FUNCTION f_get_criminals_count RETURN NUMBER IS
     v_criminals_count NUMBER;
 BEGIN
@@ -542,7 +543,7 @@ END;
 /
 SELECT f_get_criminals_count FROM dual;
 
--- function to return number of crimes for a given criminal id
+-- Make a function to return number of crimes for a given criminal id
 CREATE OR REPLACE FUNCTION f_get_crimes_count(p_criminal_id IN NUMBER) RETURN NUMBER IS
     v_crimes_count NUMBER;
 BEGIN
@@ -552,7 +553,7 @@ END;
 /
 SELECT f_get_crimes_count(1) FROM dual;
 
--- procedure to update a salary
+-- Make a procedure to update a salary
 CREATE OR REPLACE PROCEDURE p_update_salary(p_officer_id IN NUMBER, p_salary IN NUMBER) IS
 BEGIN
     UPDATE p_salary
@@ -562,7 +563,7 @@ END;
 /
 CALL p_update_salary(1, 100000);
 
--- procedure to return total incarceration time of a criminal
+-- Make a procedure to return total incarceration time of a criminal
 CREATE OR REPLACE PROCEDURE p_get_total_incarceration_time(p_criminal_id IN NUMBER, p_total_incarceration_time IN OUT NUMBER) IS
     CURSOR c_captivity_history_record IS
         SELECT DATE_INCARCERATED, DATE_FREED, CAPTIVITY_ID
@@ -590,6 +591,73 @@ BEGIN
 END;
 /
 
--- add 1 more procedure and 1 package
+-- Make a procedure that shows only criminals that have remarks in the p_criminals table (those who don't have remarks have the field null)
+CREATE OR REPLACE PROCEDURE p_show_criminals_with_remarks IS
+    CURSOR c_criminals_record IS
+        SELECT *
+        FROM p_criminals
+        WHERE remarks IS NOT NULL;
+    c_criminals c_criminals_record%rowtype;
+BEGIN
+    OPEN c_criminals_record;
+    LOOP
+        FETCH c_criminals_record INTO c_criminals;
+        EXIT WHEN c_criminals_record%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE('Criminal id: ' || c_criminals.CRIMINAL_ID || ' | Name: ' || c_criminals.FIRST_NAME || ' ' || c_criminals.LAST_NAME || ' | Age: ' || c_criminals.AGE || ' | Remarks: ' || c_criminals.REMARKS);
+    END LOOP;
+    CLOSE c_criminals_record;
+END;
+/
+CALL p_show_criminals_with_remarks();
+
+-- Make a package with different utilities
+CREATE OR REPLACE PACKAGE p_utilities AS
+    -- Find a criminal by name
+    FUNCTION f_find_criminal_by_name(p_first_name IN VARCHAR2, p_last_name IN VARCHAR2) RETURN NUMBER;
+    
+    -- Find a salary that is given
+    PROCEDURE f_find_salary(p_salary IN NUMBER, p_officer_info_id IN OUT NUMBER);
+END;
+/
+
+CREATE OR REPLACE PACKAGE BODY p_utilities AS
+    FUNCTION f_find_criminal_by_name(p_first_name IN VARCHAR2, p_last_name IN VARCHAR2) RETURN NUMBER IS
+        c_criminal_row P_CRIMINALS%ROWTYPE;
+    BEGIN
+        SELECT * INTO c_criminal_row FROM p_criminals WHERE first_name = p_first_name AND last_name = p_last_name;
+        RETURN c_criminal_row.CRIMINAL_ID;
+    EXCEPTION
+        WHEN TOO_MANY_ROWS THEN
+            DBMS_OUTPUT.PUT_LINE('There are more than one criminal with the same name');
+            RETURN NULL;
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('There is no criminal with the given name');
+            RETURN NULL;
+    END f_find_criminal_by_name;
+    
+    PROCEDURE f_find_salary(p_salary IN NUMBER, p_officer_info_id IN OUT NUMBER) IS
+        v_officer_id NUMBER;
+    BEGIN
+        SELECT officer_info_id INTO v_officer_id FROM p_salary WHERE salary = p_salary;
+    EXCEPTION
+        WHEN TOO_MANY_ROWS THEN
+            DBMS_OUTPUT.PUT_LINE('There are more than one officer with the same salary');
+        WHEN NO_DATA_FOUND THEN
+            DBMS_OUTPUT.PUT_LINE('There is no officer with the given salary');
+    END f_find_salary;
+END p_utilities;
+/
+
+DECLARE
+    v_officer_id NUMBER;
+    v_criminal_id NUMBER;
+BEGIN
+    SELECT p_utilities.f_find_criminal_by_name('John', 'Doe') INTO v_criminal_id FROM dual;
+    p_utilities.f_find_salary(100000, v_officer_id);
+    IF v_officer_id IS NOT NULL THEN
+        DBMS_OUTPUT.PUT_LINE('Officer id: ' || v_officer_id);
+    END IF;
+END;
+/
 
 -- H. Triggers (2 instruction level and 2 row level)
