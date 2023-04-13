@@ -1,31 +1,10 @@
 <h1 align="center">PLSQL Statements for a Criminal Record Database</h1>
-<h4 align="center"><i>Individual project for my DBMS Class</i></h2>
+<h4 align="center"><i>Individual project for my Database Management Systems Class</i></h2>
 
 # Description
-This database is designed to showcase several important features of SQL, including Many-to-Many links, hierarchical relations, and Data Manipulation Language (DML) statements.
+This repo is an extension of my [previous project's database](https://github.com/v4n00/mti-criminal-database) where I implement PLSQL statements in order to make it easier to use and more accessible.
 
 # Examples of statements used:
-
-## Cursors
-```SQL
--- display the list of crimes that happened in the JC sector with an explicit cursor
-DECLARE
-    CURSOR c_crimes_record (region_code VARCHAR2) IS
-        SELECT *
-        FROM p_crime_history
-        WHERE region = region_code;
-    c_crimes c_crimes_record%rowtype;
-BEGIN
-    OPEN c_crimes_record('JC');
-    LOOP
-        FETCH c_crimes_record INTO c_crimes;
-        EXIT WHEN c_crimes_record%NOTFOUND;
-        DBMS_OUTPUT.PUT_LINE('Crime id: ' || c_crimes.CRIMINAL_ID || ' | Crime date: ' || c_crimes.CRIME_DATE || ' | Offense: ' || c_crimes.OFFENSE);
-    END LOOP;
-    CLOSE c_crimes_record;
-END;
-/
-```
 
 ## Functions & Procedures:
 ```SQL
@@ -78,6 +57,27 @@ END;
 /
 BEGIN
     UPDATE p_salary SET salary = 100000 WHERE officer_info_id = 1;
+END;
+/
+```
+
+## Cursors
+```SQL
+-- Display the list of crimes that happened in the JC sector with an explicit cursor
+DECLARE
+    CURSOR c_crimes_record (region_code VARCHAR2) IS
+        SELECT *
+        FROM p_crime_history
+        WHERE region = region_code;
+    c_crimes c_crimes_record%rowtype;
+BEGIN
+    OPEN c_crimes_record('JC');
+    LOOP
+        FETCH c_crimes_record INTO c_crimes;
+        EXIT WHEN c_crimes_record%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE('Crime id: ' || c_crimes.CRIMINAL_ID || ' | Crime date: ' || c_crimes.CRIME_DATE || ' | Offense: ' || c_crimes.OFFENSE);
+    END LOOP;
+    CLOSE c_crimes_record;
 END;
 /
 ```
